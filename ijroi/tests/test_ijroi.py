@@ -92,3 +92,15 @@ def test_zipfile(tmpdir):
             z.write(str(fxpath), fxpath.basename)
 
     ijroi.read_roi_zip(zipname)
+
+
+def test_oval_points_center_diam():
+    fixture = get_fixture("16x16_centered_spanning_oval.roi")
+    with fixture.open("rb") as f:
+        points = ijroi.read_roi(f)
+
+    center, diam = ijroi.oval_points_center_diam(points)
+    assert np.array_equal(center, np.array((8, 8)))
+    assert diam == 16
+    # TODO test using some asymmetric test data too!
+

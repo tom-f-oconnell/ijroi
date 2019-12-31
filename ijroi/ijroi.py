@@ -165,9 +165,6 @@ def read_roi(fileobj):
             raise NotImplementedError('roireader: subPixelResolution not '
                 'supported for OVAL ROI subtype')
         else:
-            # TODO break into which pixels are mostly in the circle / not
-            # -> draw polyline roi around them
-            # TODO TODO test for off-by-one here
             width = right - left
             height = bottom - top
             rx = width / 2
@@ -185,10 +182,6 @@ def read_roi(fileobj):
                         # TODO TODO TODO test again. seemed it was transposed...
                         points.append([corner_y, corner_x])
 
-            # TODO TODO TODO for other users of library, trace the edge of this
-            # mask to make something like a polyline (to keep return type
-            # consistent)
-            # (right now return all pixels inside ellipse)
             return np.array(points, dtype=np.int16)
     
     if roi_type == RoiType.RECT:
@@ -286,7 +279,7 @@ def write_roi(points, fileobj, name=None, roi_type=RoiType.POLYGON):
 
     if name is None:
         # TODO randomly generate / make as imagej does
-        raise NotImplementedError
+        raise NotImplementedError('pass name to write_roi')
     elif type(name) is not str:
         name = str(name)
 
@@ -449,4 +442,22 @@ def write_oval_roi_zip(name2points, fname):
     """Writes oval ROIs from their bounding boxes.
     """
     write_roi_zip(name2points, fname, roi_type=RoiType.OVAL)
+
+
+def oval_points_center_diam(points, assert_circular=True):
+    """Returns (center, diam) for points as returned by read_roi.
+    """
+    mins = points.min(axis=0)
+    maxs = points.max(axis=0)
+    extents = maxs - mins + 1
+    # TODO check again that need for this flip isn't just b/c i flip in my
+    # own util fns that input to the other ijroi fns
+    #center = (mins + extents / 2)[::-1]
+    center = mins + extents / 2
+    if assert_circular:
+        assert extents[0] == extents[1]
+        diam = extents[0]
+    else:
+        diam = np.mean(extents)
+    return center, diam
 
